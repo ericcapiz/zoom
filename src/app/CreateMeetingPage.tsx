@@ -1,8 +1,14 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
-import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
+import {
+  Call,
+  MemberRequest,
+  useStreamVideoClient,
+} from "@stream-io/video-react-sdk";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { getUserIds } from "./actions";
+import Button from "@/components/Button";
 
 export default function CreateMeetingPage() {
   const [descriptionInput, setDescriptionInput] = useState("");
@@ -19,9 +25,25 @@ export default function CreateMeetingPage() {
     }
     try {
       const id = crypto.randomUUID();
-      const call = client.call("default", id);
+      const callType = participantsInput ? "private-meeting" : "default";
+      const call = client.call(callType, id);
+      const memberEmails = participantsInput
+        .split(",")
+        .map((email) => email.trim());
+      const memberIds = await getUserIds(memberEmails);
+      const members: MemberRequest[] = memberIds
+        .map((id) => ({ user_id: id, role: "call_member" }))
+        .concat({ user_id: user.id, role: "call_member" })
+        .filter(
+          (v, i, a) => a.findIndex((v2) => v2.user_id === v.user_id) === i,
+        );
+
+      const starts_at = new Date(startTimeInput || Date.now()).toISOString();
+
       await call.getOrCreate({
         data: {
+          starts_at,
+          members,
           custom: { description: descriptionInput },
         },
       });
@@ -52,9 +74,9 @@ export default function CreateMeetingPage() {
           value={participantsInput}
           onChange={setParticipantsInput}
         />
-        <button className="w-full" onClick={createMeeting}>
+        <Button className="w-full" onClick={createMeeting}>
           Create Meeting
-        </button>
+        </Button>
       </div>
       {call && <MeetingLink call={call} />}
     </div>
