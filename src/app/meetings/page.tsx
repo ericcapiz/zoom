@@ -1,10 +1,10 @@
 import { Metadata } from "next";
-import MyMettingsPage from "./MyMeetingsPage";
+import MyMeetingsPage from "./MyMeetingsPage";
 
 export const metadata: Metadata = {
-  title: "My mettings",
+  title: "My meetings",
 };
 
 export default function Page() {
-  return <MyMettingsPage />;
+  return <MyMeetingsPage />;
 }
